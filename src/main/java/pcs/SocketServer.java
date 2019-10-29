@@ -12,11 +12,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import pcs.models.Task;
 import pcs.models.WorkerNode;
 
 
 public class SocketServer implements Runnable{
+	final Logger logger = LoggerFactory.getLogger(SocketServer.class);
+
 	private ConcurrentHashMap<String, NodeConnection> nodes;
 	private Queue<String> availableNodes;
 	private int port;
@@ -34,7 +39,7 @@ public class SocketServer implements Runnable{
 		this.nodes = new ConcurrentHashMap<String, NodeConnection>();
 		this.availableNodes = new PriorityBlockingQueue<String>();
 		try (ServerSocket listener = new ServerSocket(this.port)) {
-            System.out.println("The socket server is running on port..." + Integer.toString(this.port));
+            logger.info("The socket server is running on port {}", this.port);
             ExecutorService pool = Executors.newFixedThreadPool(20);
             while (true) {
             	Socket socket = listener.accept();

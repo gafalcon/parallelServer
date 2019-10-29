@@ -8,14 +8,22 @@ import pcs.models.PITask;
 import pcs.models.Task;
 import pcs.models.WorkerNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Server{
 
 	static TaskController taskController;
     public static void main(String[] args) {
+    	Logger logger = LoggerFactory.getLogger(Server.class);
 
     	taskController = new TaskController();
         Javalin app = Javalin.create(config -> {
         	config.enableCorsForAllOrigins();
+        	//config.enableDevLogging();
+        	config.requestLogger((ctx, ms) -> {
+                logger.info(String.format("%s - %s", ctx.method(), ctx.path()));
+            });
         }).start(7000);
         
         
