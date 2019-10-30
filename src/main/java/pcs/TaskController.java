@@ -17,7 +17,8 @@ public class TaskController {
 	List<Task> runningTasks;
 	List<Task> completedTasks;
 	Queue<Task> waitingTasks;
-	
+	WebSocketController wsController = WebSocketController.getWSController();
+
 	public TaskController() {
 		this.runningTasks = new LinkedList<Task>();
 		this.completedTasks = new LinkedList<Task>();
@@ -36,6 +37,7 @@ public class TaskController {
 		}else {
 			this.waitingTasks.add(t);
 		}
+		this.wsController.broadcastMessage(this.getAllTasks());
 		return t;
 	}
 	
@@ -51,6 +53,7 @@ public class TaskController {
 		this.runningTasks.remove(task);
 		this.completedTasks.add(task);
 		task.setStatus(TaskStatus.FINISHED);
+		this.wsController.broadcastMessage(this.getAllTasks());
 	}
 	public List<Task> getRunningTasks() {
 		return runningTasks;

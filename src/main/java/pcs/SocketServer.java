@@ -27,6 +27,8 @@ public class SocketServer implements Runnable{
 	private int port;
 	Consumer<String> onNewConnection;
 	Consumer<Task> onTaskCompleted;
+	WebSocketController wsController = WebSocketController.getWSController();
+
 	public SocketServer(int port, Consumer<String> onNewConnection, Consumer<Task> onTaskCompleted) {
 		this.port = port;
 		this.onNewConnection = onNewConnection;
@@ -45,7 +47,7 @@ public class SocketServer implements Runnable{
             	Socket socket = listener.accept();
             	String node_key = socket.getRemoteSocketAddress().toString();
             	NodeConnection new_conn = new NodeConnection(node_key, socket, 
-            			s -> this.onNewConnection.accept(s), this::onDisconnect, this::onTaskFinished);
+            			this::onConnect, this::onDisconnect, this::onTaskFinished);
             	//TODO store new connection in DB
             	this.nodes.put(node_key, new_conn);
             	this.availableNodes.add(node_key);
@@ -58,15 +60,23 @@ public class SocketServer implements Runnable{
 		
 	}
 	
+	public void onConnect(String node_id) {
+		this.onNewConnection.accept(node_id);
+		this.wsController.broadcastMessage(this.getAllNodes());
+	}
+	
 	public void onDisconnect(String node_id) {
 		this.nodes.remove(node_id);
 		this.availableNodes.remove(node_id);
+		this.wsController.broadcastMessage(this.getAllNodes());
+		//TODO if was running, inform that task was not completed
 	}
 	
 	public void onTaskFinished(String node_key, Task task) {
-		this.onTaskCompleted.accept(task);
 		this.availableNodes.add(node_key);
+		this.onTaskCompleted.accept(task);
 		this.onNewConnection.accept(node_key);
+		this.wsController.broadcastMessage(this.getAllNodes());
 	}
 
 	public ArrayList<WorkerNode> getAllNodes() {

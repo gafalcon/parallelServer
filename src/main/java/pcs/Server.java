@@ -16,7 +16,7 @@ public class Server{
 	static TaskController taskController;
     public static void main(String[] args) {
     	Logger logger = LoggerFactory.getLogger(Server.class);
-
+    	WebSocketController wsController = WebSocketController.getWSController();
     	taskController = new TaskController();
         Javalin app = Javalin.create(config -> {
         	config.enableCorsForAllOrigins();
@@ -29,14 +29,6 @@ public class Server{
         
         app.get("/", ctx -> ctx.result("Hello World"));
 
-        app.get("/test", ctx -> {
-        	ArrayList<WorkerNode> l = new ArrayList<WorkerNode>();
-        	WorkerNode node = new WorkerNode("localhost", NodeStatus.WAITING);
-        	l.add(node);
-        	l.add(node);
-        	ctx.json(l);
-        });
-        
         app.get("/api/nodes", ctx -> {
         	System.out.println("/api/nodes");
         	ctx.json(taskController.getAllNodes());
@@ -60,7 +52,7 @@ public class Server{
         		ctx.result("test");
         	}
         });
-        
+
         app.get("/api/tasks", ctx -> {
         	System.out.println("/api/tasks");
         	ctx.json(taskController.getAllTasks());
@@ -72,5 +64,18 @@ public class Server{
         	taskController.broadCastMsg(msg);
         	ctx.result(msg);
         });
+        
+        app.ws("/api/ws", wsController.wsRequest);
+        
+        
+        app.get("/api/test", ctx -> {
+        	ArrayList<WorkerNode> l = new ArrayList<WorkerNode>();
+        	WorkerNode node = new WorkerNode("localhost", NodeStatus.WAITING);
+        	l.add(node);
+        	l.add(node);
+        	wsController.broadcastMessage("test"); 
+        	ctx.json(l);
+        });
+
     }
 }
