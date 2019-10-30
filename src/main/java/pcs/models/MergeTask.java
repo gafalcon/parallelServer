@@ -1,5 +1,7 @@
 package pcs.models;
 
+import java.util.function.Consumer;
+
 public class MergeTask extends Task{
 
 	String leftFile;
@@ -38,6 +40,12 @@ public class MergeTask extends Task{
 
 	public void setMergedFile(String mergedFile) {
 		this.mergedFile = mergedFile;
+	}
+
+	@Override
+	public boolean start(Consumer<String> printFn) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 	

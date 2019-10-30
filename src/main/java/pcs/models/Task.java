@@ -4,11 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public abstract class Task {
+	static int MAX_NUM_EXPERIMS = 100000;
 	protected String name;
 	protected TaskType task_type;
 	protected TaskStatus status;
+	
+	@JsonIgnore
 	protected Task parentTask;
+	
+	@JsonIgnore
 	protected List<Task> subtasks;
 
 	public Task(String name, TaskType task_type, TaskStatus status) {
@@ -65,7 +72,14 @@ public abstract class Task {
 	
 	}
 	
-	public void setResults(String results) {
+	public void completed(String results) {
 		
 	}
+	
+	public void updateResult(String results) {
+
+	}
+
+	public abstract boolean start(Consumer<String> printFn);
+
 }

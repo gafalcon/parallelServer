@@ -1,12 +1,11 @@
 package pcs;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import io.javalin.Javalin;
+import payloads.TaskRequest;
+import payloads.WorkerNode;
 import pcs.models.NodeStatus;
-import pcs.models.PITask;
-import pcs.models.Task;
-import pcs.models.WorkerNode;
+import pcs.models.Student;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,36 +29,25 @@ public class Server{
         app.get("/", ctx -> ctx.result("Hello World"));
 
         app.get("/api/nodes", ctx -> {
-        	System.out.println("/api/nodes");
         	ctx.json(taskController.getAllNodes());
         });
         
         app.post("/api/task", ctx -> {
-        	System.out.println("New task /api/task");
         	System.out.println(ctx.body());
-        	HashMap<?, ?> taskRequest = ctx.bodyAsClass(HashMap.class);
-        	System.out.println(taskRequest.get("type"));
-        	if (taskRequest.get("type").equals("pi")) {
-        		System.out.println("Task pi!!");
-
-        		//TODO change to split task into subtasks
-        		int num_experims = (int) taskRequest.get("num_experiments");
-        		String task_name = (String) taskRequest.get("name");
-        		Task t = new PITask(task_name, num_experims);
-        		taskController.newTask(t);
-        		ctx.json(t);
-        	}else {
-        		ctx.result("test");
+        	try{
+        		TaskRequest taskRequest = ctx.bodyAsClass(TaskRequest.class);
+        		System.out.println(taskRequest);
+        		ctx.json(taskController.newTask(taskRequest));
+        	}catch(Exception ex) {
+        		System.out.println(ex);
         	}
         });
 
         app.get("/api/tasks", ctx -> {
-        	System.out.println("/api/tasks");
         	ctx.json(taskController.getAllTasks());
         });
         
         app.get("/api/broadcast", ctx -> {
-        	System.out.println("/api/broadcast");
         	String msg = ctx.queryParam("msg");
         	taskController.broadCastMsg(msg);
         	ctx.result(msg);
@@ -75,6 +63,12 @@ public class Server{
         	l.add(node);
         	wsController.broadcastMessage("test"); 
         	ctx.json(l);
+        });
+        
+        app.post("/api/student", ctx -> {
+        	System.out.println(ctx.body());
+        	TaskRequest student = ctx.bodyAsClass(TaskRequest.class);
+        	ctx.json(student);
         });
 
     }

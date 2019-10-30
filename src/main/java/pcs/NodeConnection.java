@@ -54,6 +54,8 @@ public class NodeConnection implements Runnable{
             System.out.println("Socket has no more lines");
         } catch (Exception e) {
             System.out.println("Error:" + socket);
+            System.out.println(e);
+            e.printStackTrace();
         } finally {
             try { socket.close(); } catch (IOException e) {}
             System.out.println("Closed: " + socket);
@@ -71,16 +73,22 @@ public class NodeConnection implements Runnable{
 	}
 	
 	public void startNewTask(Task task) {
-		System.out.println("Node connection start new task");
-		this.runningTask = task;
-		task.printTaskInfo(out::println);
-		this.status = NodeStatus.BUSY;
+		System.out.println("Node connection start new task" + task);
+		if (task.start(out::println)) {
+			this.status = NodeStatus.BUSY;
+			this.runningTask = task;
+		}else {
+			this.onTaskCompleted.accept(this.nodeId, task);
+		}
 	}
 	
 	public void taskEnded() {
+		System.out.println("Node connection task ended");
 		String res = in.nextLine();
-		this.runningTask.setResults(res);
+		Task t = this.runningTask;
+		this.runningTask.completed(res);
 		this.status = NodeStatus.WAITING;
-		this.onTaskCompleted.accept(this.nodeId, this.runningTask);
+		this.runningTask = null;
+		this.onTaskCompleted.accept(this.nodeId, t);
 	}
 }

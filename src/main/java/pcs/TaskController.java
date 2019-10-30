@@ -8,9 +8,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 
+import payloads.TaskRequest;
+import payloads.WorkerNode;
+import pcs.models.PITask;
 import pcs.models.Task;
-import pcs.models.TaskStatus;
-import pcs.models.WorkerNode;
 
 public class TaskController {
 	SocketServer socketServer;
@@ -27,24 +28,37 @@ public class TaskController {
     	new Thread(socketServer).start();
 	}
 	
-	public Task newTask(Task t) {
-		Optional<String> optNode = this.socketServer.findAvailableNode();
-		if (optNode.isPresent()) {
-			this.socketServer.sendTaskToNode(optNode.get(), t);
-			t.setStatus(TaskStatus.RUNNING);
-			this.runningTasks.add(t);
-			System.out.println("Sent task to node");
+	public Task newTask(TaskRequest taskRequest) {
+		Task t;
+		if (taskRequest.getType().equals("pi")) {
+			t = PITask.createPITask(taskRequest.getName(), taskRequest.getNum_experiments());
+			if (!t.getSubtasks().isEmpty()) {
+				this.waitingTasks.addAll(t.getSubtasks());
+			}
+			this.waitingTasks.add(t);
 		}else {
+			t = new PITask("test", 123);
 			this.waitingTasks.add(t);
 		}
+		this.startTask();
 		this.wsController.broadcastMessage(this.getAllTasks());
 		return t;
+	}
+	
+	public void startTask() {
+		Optional<String> optNode = this.socketServer.findAvailableNode();
+		if (optNode.isPresent()) {
+			Task t = this.waitingTasks.remove();
+			this.runningTasks.add(t);
+			this.socketServer.sendTaskToNode(optNode.get(), t);
+			System.out.println("Sent task to node");
+		}	
 	}
 	
 	public void newConnection(String node_id) {
 		System.out.println("Task Controller: new connection: "+node_id);
 		if (!this.waitingTasks.isEmpty()) {
-			this.newTask(this.waitingTasks.remove());
+			this.startTask();
 		}
 	}
 
@@ -52,7 +66,6 @@ public class TaskController {
 		System.out.println("Task completed!!");
 		this.runningTasks.remove(task);
 		this.completedTasks.add(task);
-		task.setStatus(TaskStatus.FINISHED);
 		this.wsController.broadcastMessage(this.getAllTasks());
 	}
 	public List<Task> getRunningTasks() {

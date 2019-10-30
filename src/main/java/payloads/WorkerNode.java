@@ -1,4 +1,6 @@
-package pcs.models;
+package payloads;
+
+import pcs.models.NodeStatus;
 
 public class WorkerNode {
 

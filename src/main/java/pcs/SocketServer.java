@@ -15,8 +15,8 @@ import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import payloads.WorkerNode;
 import pcs.models.Task;
-import pcs.models.WorkerNode;
 
 
 public class SocketServer implements Runnable{

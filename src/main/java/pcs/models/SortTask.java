@@ -1,5 +1,7 @@
 package pcs.models;
 
+import java.util.function.Consumer;
+
 public class SortTask extends Task{
 	
 	private String unsortedFile;
@@ -28,6 +30,12 @@ public class SortTask extends Task{
 
 	public void setSortedFile(String sortedFile) {
 		this.sortedFile = sortedFile;
+	}
+
+	@Override
+	public boolean start(Consumer<String> printFn) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
 	
