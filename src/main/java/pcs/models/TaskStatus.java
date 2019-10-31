@@ -3,5 +3,6 @@ package pcs.models;
 public enum TaskStatus {
 	WAITING,
 	RUNNING,
-	FINISHED
+	FINISHED,
+	WAITING_DEPS
 }

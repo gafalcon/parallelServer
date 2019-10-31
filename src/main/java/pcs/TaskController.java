@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 import payloads.TaskRequest;
 import payloads.WorkerNode;
@@ -17,14 +17,14 @@ public class TaskController {
 	SocketServer socketServer;
 	List<Task> runningTasks;
 	List<Task> completedTasks;
-	Queue<Task> waitingTasks;
+	BlockingQueue<Task> waitingTasks;
 	WebSocketController wsController = WebSocketController.getWSController();
 
 	public TaskController() {
 		this.runningTasks = new LinkedList<Task>();
 		this.completedTasks = new LinkedList<Task>();
-		this.waitingTasks = new LinkedList<Task>();
-    	socketServer = new SocketServer(4000, this::newConnection, this::taskCompleted);
+		this.waitingTasks = TaskQueue.getQueue();
+    	socketServer = new SocketServer(4000, this::taskStarted, this::taskCompleted);
     	new Thread(socketServer).start();
 	}
 	
@@ -36,32 +36,30 @@ public class TaskController {
 				this.waitingTasks.addAll(t.getSubtasks());
 			}
 			this.waitingTasks.add(t);
-		}else {
+		} else {
 			t = new PITask("test", 123);
 			this.waitingTasks.add(t);
 		}
-		this.startTask();
 		this.wsController.broadcastMessage(this.getAllTasks());
 		return t;
 	}
 	
-	public void startTask() {
-		Optional<String> optNode = this.socketServer.findAvailableNode();
-		if (optNode.isPresent()) {
-			Task t = this.waitingTasks.remove();
-			this.runningTasks.add(t);
-			this.socketServer.sendTaskToNode(optNode.get(), t);
-			System.out.println("Sent task to node");
-		}	
+//	public void startTask() {
+//		Optional<String> optNode = this.socketServer.findAvailableNode();
+//		if (optNode.isPresent()) {
+//			Task t = this.waitingTasks.remove();
+//			this.runningTasks.add(t);
+//			this.socketServer.sendTaskToNode(optNode.get(), t);
+//			System.out.println("Sent task to node");
+//		}	
+//	}
+	
+	public void taskStarted(Task t) {
+		System.out.println("Task started");
+		this.runningTasks.add(t);
+		this.wsController.broadcastMessage(this.getAllTasks());
 	}
 	
-	public void newConnection(String node_id) {
-		System.out.println("Task Controller: new connection: "+node_id);
-		if (!this.waitingTasks.isEmpty()) {
-			this.startTask();
-		}
-	}
-
 	public void taskCompleted(Task task) {
 		System.out.println("Task completed!!");
 		this.runningTasks.remove(task);

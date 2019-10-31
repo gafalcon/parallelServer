@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -20,11 +21,14 @@ public class NodeConnection implements Runnable{
 	 private Consumer<String> onDisconnect;
 	 private Consumer<String> onReady;
 	 private BiConsumer<String, Task> onTaskCompleted;
+	 private Consumer<Task> onTaskStarted;
+	 private BlockingQueue<Task> taskQueue;
 
 	public NodeConnection(String node_id, Socket socket,
 			Consumer<String> onReady,
 			Consumer<String> onDisconnect,
-			BiConsumer<String, Task> onTaskCompleted
+			BiConsumer<String, Task> onTaskCompleted,
+			Consumer<Task> onTaskStarted
 			) {
 		// TODO Auto-generated constructor stub
 		this.nodeId = node_id;
@@ -33,6 +37,8 @@ public class NodeConnection implements Runnable{
          this.onDisconnect = onDisconnect;
          this.onReady = onReady;
          this.onTaskCompleted = onTaskCompleted;
+         this.onTaskStarted = onTaskStarted;
+         this.taskQueue = TaskQueue.getQueue();
 	}
 
 	@Override
@@ -42,6 +48,10 @@ public class NodeConnection implements Runnable{
             this.in = new Scanner(socket.getInputStream());
             this.out = new PrintWriter(socket.getOutputStream(), true);
             this.onReady.accept(this.nodeId);
+
+            new Thread(()-> {
+            	this.consumeTasks();
+            }).start(); 
 
             while (in.hasNextLine()) {
             	String line = in.nextLine();
@@ -63,6 +73,20 @@ public class NodeConnection implements Runnable{
         }
 	}
 	
+	public void consumeTasks() {
+		while(true) {
+			try {
+				System.out.println(String.format("Node %s: waiting for new task", this.nodeId));
+				Task t = this.taskQueue.take();
+				System.out.println(String.format("Node %s: new task acquired", this.nodeId));
+				this.startNewTask(t);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public void write(String msg) {
 		System.out.println("Writing to client node");
 		this.out.println(msg);
@@ -72,17 +96,29 @@ public class NodeConnection implements Runnable{
 		return this.status;
 	}
 	
-	public void startNewTask(Task task) {
+	public synchronized void startNewTask(Task task) {
 		System.out.println("Node connection start new task" + task);
 		if (task.start(out::println)) {
 			this.status = NodeStatus.BUSY;
 			this.runningTask = task;
+			this.onTaskStarted.accept(task);
 		}else {
 			this.onTaskCompleted.accept(this.nodeId, task);
 		}
+		
+		while (this.status == NodeStatus.BUSY) {
+            try { 
+                wait();
+            } catch (InterruptedException e)  {
+                Thread.currentThread().interrupt(); 
+                System.out.println("Error: Thread Interrupted");
+                //Log.error("Thread interrupted", e); 
+            }
+        }
+		
 	}
 	
-	public void taskEnded() {
+	public synchronized void taskEnded() {
 		System.out.println("Node connection task ended");
 		String res = in.nextLine();
 		Task t = this.runningTask;
@@ -90,5 +126,6 @@ public class NodeConnection implements Runnable{
 		this.status = NodeStatus.WAITING;
 		this.runningTask = null;
 		this.onTaskCompleted.accept(this.nodeId, t);
+		notify();
 	}
 }

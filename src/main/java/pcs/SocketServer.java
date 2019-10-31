@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,14 +25,17 @@ public class SocketServer implements Runnable{
 
 	private ConcurrentHashMap<String, NodeConnection> nodes;
 	private Queue<String> availableNodes;
+
+	BlockingQueue<Task> taskQueue;
 	private int port;
-	Consumer<String> onNewConnection;
+	Consumer<Task> onTaskStarted;
 	Consumer<Task> onTaskCompleted;
 	WebSocketController wsController = WebSocketController.getWSController();
 
-	public SocketServer(int port, Consumer<String> onNewConnection, Consumer<Task> onTaskCompleted) {
+	public SocketServer(int port, Consumer<Task> onTaskStarted, Consumer<Task> onTaskCompleted) {
 		this.port = port;
-		this.onNewConnection = onNewConnection;
+		this.taskQueue = TaskQueue.getQueue();
+		this.onTaskStarted = onTaskStarted;
 		this.onTaskCompleted = onTaskCompleted;
 	}
 
@@ -47,7 +51,7 @@ public class SocketServer implements Runnable{
             	Socket socket = listener.accept();
             	String node_key = socket.getRemoteSocketAddress().toString();
             	NodeConnection new_conn = new NodeConnection(node_key, socket, 
-            			this::onConnect, this::onDisconnect, this::onTaskFinished);
+            			this::onConnect, this::onDisconnect, this::onTaskFinished, this.onTaskStarted);
             	//TODO store new connection in DB
             	this.nodes.put(node_key, new_conn);
             	this.availableNodes.add(node_key);
@@ -61,11 +65,12 @@ public class SocketServer implements Runnable{
 	}
 	
 	public void onConnect(String node_id) {
-		this.onNewConnection.accept(node_id);
+		System.out.println("New node connection: " + node_id);
 		this.wsController.broadcastMessage(this.getAllNodes());
 	}
 	
 	public void onDisconnect(String node_id) {
+		System.out.println("Node disconnected: " + node_id);
 		this.nodes.remove(node_id);
 		this.availableNodes.remove(node_id);
 		this.wsController.broadcastMessage(this.getAllNodes());
@@ -75,7 +80,6 @@ public class SocketServer implements Runnable{
 	public void onTaskFinished(String node_key, Task task) {
 		this.availableNodes.add(node_key);
 		this.onTaskCompleted.accept(task);
-		this.onNewConnection.accept(node_key);
 		this.wsController.broadcastMessage(this.getAllNodes());
 	}
 
@@ -88,10 +92,10 @@ public class SocketServer implements Runnable{
 		return l;
 	}
 	
-	public void sendTaskToNode(String node_id, Task task){
-		NodeConnection node = this.nodes.get(node_id);
-		node.startNewTask(task);
-	}
+//	public void sendTaskToNode(String node_id, Task task){
+//		NodeConnection node = this.nodes.get(node_id);
+//		node.startNewTask(task);
+//	}
 	
 	public Optional<String> findAvailableNode() {
 		if (this.availableNodes.isEmpty())

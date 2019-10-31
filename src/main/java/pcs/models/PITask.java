@@ -66,7 +66,7 @@ public class PITask extends Task{
 	}
 	@Override
 	public boolean start(Consumer<String> printFn) {
-		if (this.parentTask == null) {
+		if (this.parentTask == null && !this.subtasks.isEmpty()) {
 			this.setStatus(TaskStatus.FINISHED);
 			return false;
 		} else {

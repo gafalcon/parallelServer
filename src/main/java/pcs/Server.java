@@ -5,7 +5,6 @@ import io.javalin.Javalin;
 import payloads.TaskRequest;
 import payloads.WorkerNode;
 import pcs.models.NodeStatus;
-import pcs.models.Student;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,11 +64,5 @@ public class Server{
         	ctx.json(l);
         });
         
-        app.post("/api/student", ctx -> {
-        	System.out.println(ctx.body());
-        	TaskRequest student = ctx.bodyAsClass(TaskRequest.class);
-        	ctx.json(student);
-        });
-
     }
 }
