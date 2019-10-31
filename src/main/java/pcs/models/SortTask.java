@@ -37,6 +37,18 @@ public class SortTask extends Task{
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public boolean updateResult(Task subtask) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean updateParent() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 	
 	
 }

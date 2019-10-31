@@ -76,10 +76,9 @@ public abstract class Task {
 		
 	}
 	
-	public void updateResult(String results) {
-
-	}
-
 	public abstract boolean start(Consumer<String> printFn);
 
+	public abstract boolean updateResult(Task subtask);
+
+	public abstract boolean updateParent();
 }
