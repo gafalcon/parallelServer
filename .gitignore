@@ -14,3 +14,5 @@ pse
 # Maven
 log/
 target/
+static/sorted
+static/unsorted
