@@ -100,4 +100,10 @@ public abstract class Task {
 		}
 		return false;
 	}
+
+
+	public void cancelled() {
+		// TODO Auto-generated method stub
+		this.setStatus(TaskStatus.WAITING);
+	}
 }

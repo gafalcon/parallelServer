@@ -26,7 +26,7 @@ public class TaskController {
 		this.runningTasks = new LinkedList<Task>();
 		this.completedTasks = new LinkedList<Task>();
 		this.waitingTasks = TaskQueue.getQueue();
-    	socketServer = new SocketServer(4000, this::taskStarted, this::taskCompleted);
+    	socketServer = new SocketServer(4000, this::taskStarted, this::taskCompleted, this::taskCancelled);
     	new Thread(socketServer).start();
 	}
 	
@@ -65,6 +65,12 @@ public class TaskController {
 		}
 		this.completedTasks.add(task);
 		this.wsController.broadcastMessage(this.getAllTasks());
+	}
+
+	public void taskCancelled(Task task) {
+		System.out.println("Task cancelled!!");
+		this.runningTasks.remove(task);
+		this.waitingTasks.add(task);
 	}
 
 	public List<Task> getRunningTasks() {

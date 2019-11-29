@@ -57,8 +57,8 @@ public class NodeConnection implements Runnable{
             	String line = in.nextLine();
             	//TODO handle incoming messages from node
             	System.out.println("RECEIVED FROM NODE: "+line);
-            	if (line.equals("END")){
-            		this.taskEnded();
+            	if (line.startsWith("END")){
+            		this.taskEnded(line);
             	}
             }
             System.out.println("Socket has no more lines");
@@ -118,14 +118,19 @@ public class NodeConnection implements Runnable{
 		
 	}
 	
-	public synchronized void taskEnded() {
+	public synchronized void taskEnded(String msg) {
 		System.out.println("Node connection task ended");
-		String res = in.nextLine();
+		String []res = msg.split(",");
 		Task t = this.runningTask;
-		this.runningTask.completed(res);
+		this.runningTask.completed(res[1]);
 		this.status = NodeStatus.WAITING;
 		this.runningTask = null;
 		this.onTaskCompleted.accept(this.nodeId, t);
 		notify();
 	}
+
+	public Task getRunningTask() {
+		return runningTask;
+	}
+	
 }

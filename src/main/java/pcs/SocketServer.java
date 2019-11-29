@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import payloads.WorkerNode;
+import pcs.models.NodeStatus;
 import pcs.models.Task;
 
 
@@ -30,13 +31,18 @@ public class SocketServer implements Runnable{
 	private int port;
 	Consumer<Task> onTaskStarted;
 	Consumer<Task> onTaskCompleted;
+	Consumer<Task> onTaskCancelled;
 	WebSocketController wsController = WebSocketController.getWSController();
 
-	public SocketServer(int port, Consumer<Task> onTaskStarted, Consumer<Task> onTaskCompleted) {
+	public SocketServer(int port, Consumer<Task> onTaskStarted, 
+			Consumer<Task> onTaskCompleted,
+			Consumer<Task> onTaskCancelled
+			) {
 		this.port = port;
 		this.taskQueue = TaskQueue.getQueue();
 		this.onTaskStarted = onTaskStarted;
 		this.onTaskCompleted = onTaskCompleted;
+		this.onTaskCancelled = onTaskCancelled;
 	}
 
 	@Override
@@ -71,10 +77,13 @@ public class SocketServer implements Runnable{
 	
 	public void onDisconnect(String node_id) {
 		System.out.println("Node disconnected: " + node_id);
-		this.nodes.remove(node_id);
+		NodeConnection node = this.nodes.remove(node_id);
 		this.availableNodes.remove(node_id);
 		this.wsController.broadcastMessage(this.getAllNodes());
 		//TODO if was running, inform that task was not completed
+		if (node.getStatus() == NodeStatus.BUSY) {
+			this.onTaskCancelled.accept(node.getRunningTask());
+		}
 	}
 	
 	public void onTaskFinished(String node_key, Task task) {
@@ -91,11 +100,6 @@ public class SocketServer implements Runnable{
 		});
 		return l;
 	}
-	
-//	public void sendTaskToNode(String node_id, Task task){
-//		NodeConnection node = this.nodes.get(node_id);
-//		node.startNewTask(task);
-//	}
 	
 	public Optional<String> findAvailableNode() {
 		if (this.availableNodes.isEmpty())
