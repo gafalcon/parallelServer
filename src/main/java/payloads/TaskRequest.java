@@ -17,6 +17,11 @@ public class TaskRequest {
 		this.setSortfile(sort);
 	}
 
+	public TaskRequest(String name, String type, String sort) {
+		this.name = name;
+		this.type = type;
+		this.setSortfile(sort);
+	}
 	public String getName() {
 		return name;
 	}

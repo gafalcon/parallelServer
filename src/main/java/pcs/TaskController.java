@@ -1,5 +1,6 @@
 package pcs;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 
 import payloads.TaskRequest;
 import payloads.WorkerNode;
+import pcs.models.MergeSortTask;
 import pcs.models.PITask;
 import pcs.models.Task;
 
@@ -28,7 +30,7 @@ public class TaskController {
     	new Thread(socketServer).start();
 	}
 	
-	public Task newTask(TaskRequest taskRequest) {
+	public Task newTask(TaskRequest taskRequest) throws IOException {
 		Task t;
 		if (taskRequest.getType().equals("pi")) {
 			t = PITask.createPITask(taskRequest.getName(), taskRequest.getNum_experiments());
@@ -37,9 +39,12 @@ public class TaskController {
 			}else {
 				this.waitingTasks.add(t);
 			}
-		} else {
-			t = new PITask("test", 123);
-			this.waitingTasks.add(t);
+		} else {//(taskRequest.getType().equals("sort")){
+			t = MergeSortTask.createSortTask(taskRequest.getName(), taskRequest.getSortfile());
+			List<Task> leafTasks = t.getLeafTasks();
+			System.out.println(leafTasks);
+			this.waitingTasks.addAll(leafTasks);
+			//this.waitingTasks.add(t);
 		}
 		this.wsController.broadcastMessage(this.getAllTasks());
 		return t;
@@ -61,6 +66,7 @@ public class TaskController {
 		this.completedTasks.add(task);
 		this.wsController.broadcastMessage(this.getAllTasks());
 	}
+
 	public List<Task> getRunningTasks() {
 		return runningTasks;
 	}

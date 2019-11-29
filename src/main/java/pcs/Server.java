@@ -2,6 +2,8 @@ package pcs;
 import java.util.ArrayList;
 
 import io.javalin.Javalin;
+import io.javalin.core.util.FileUtil;
+import io.javalin.http.UploadedFile;
 import payloads.TaskRequest;
 import payloads.WorkerNode;
 import pcs.models.NodeStatus;
@@ -11,7 +13,9 @@ import org.slf4j.LoggerFactory;
 
 public class Server{
 
+	static String FILES_DIR = "./";
 	static TaskController taskController;
+
     public static void main(String[] args) {
     	Logger logger = LoggerFactory.getLogger(Server.class);
     	WebSocketController wsController = WebSocketController.getWSController();
@@ -31,7 +35,7 @@ public class Server{
         	ctx.json(taskController.getAllNodes());
         });
         
-        app.post("/api/task", ctx -> {
+        app.post("/api/pitask", ctx -> {
         	System.out.println(ctx.body());
         	try{
         		TaskRequest taskRequest = ctx.bodyAsClass(TaskRequest.class);
@@ -40,6 +44,24 @@ public class Server{
         	}catch(Exception ex) {
         		System.out.println(ex);
         	}
+        });
+        
+        app.post("/api/sorttask", ctx -> {
+        	System.out.println("form param" + ctx.formParamMap());
+        	UploadedFile file = ctx.uploadedFile("sortfile");
+        	//TODO change file name to make it unique
+        	if (file != null) {
+        		//TODO change files dir location
+        		String filename = FILES_DIR + file.getFilename();
+        		FileUtil.streamToFile(file.getContent(), filename);
+        		String taskName = ctx.formParam("name");
+        		System.out.println(file);
+        		System.out.println(filename);
+        		taskController.newTask(new TaskRequest(taskName, "sort", filename));
+        		
+        	}	
+        	
+            ctx.json("Upload complete");
         });
 
         app.get("/api/tasks", ctx -> {

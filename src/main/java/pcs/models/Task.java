@@ -1,6 +1,7 @@
 package pcs.models;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -76,9 +77,26 @@ public abstract class Task {
 		
 	}
 	
+	public List<Task> getLeafTasks(){
+		List<Task> l = new LinkedList<Task>();
+		if (!this.subtasks.isEmpty()) { //Has subtasks
+			for (Task task : this.subtasks) {
+				l.addAll(task.getLeafTasks());
+			}
+		}else { //Doesnt have subtasks, then it is a leaf task
+			l.add(this);
+		}
+		return l;
+	}
+	
 	public abstract boolean start(Consumer<String> printFn);
 
 	public abstract boolean updateResult(Task subtask);
 
-	public abstract boolean updateParent();
+	public boolean updateParent() {
+		if (this.parentTask != null) {
+			return this.parentTask.updateResult(this);
+		}
+		return false;
+	}
 }

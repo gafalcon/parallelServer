@@ -73,8 +73,7 @@ public class PITask extends Task{
 			this.setStatus(TaskStatus.FINISHED);
 			return false;
 		} else {
-			printFn.accept(this.task_type.toString());
-			printFn.accept(Long.toString(this.n_experims));
+			printFn.accept(this.task_type.toString()+","+Long.toString(this.n_experims));
 			this.setStatus(TaskStatus.RUNNING);
 			return true;
 		}
@@ -84,6 +83,10 @@ public class PITask extends Task{
 		return "PITask [name= " + name + ", n_experims=" + n_experims + ", n_success_experims=" + n_success_experims + "]";
 	}
 	
+	/* 
+	 * Update parent task when this task is finished
+	 * Returns true if parent has no more deps, or false if it still has deps or if it does not have parent
+	 * */
 	@Override
 	public boolean updateParent() {
 		if (this.parentTask != null) {
