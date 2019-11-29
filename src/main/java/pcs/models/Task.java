@@ -77,6 +77,7 @@ public abstract class Task {
 		
 	}
 	
+	@JsonIgnore
 	public List<Task> getLeafTasks(){
 		List<Task> l = new LinkedList<Task>();
 		if (!this.subtasks.isEmpty()) { //Has subtasks

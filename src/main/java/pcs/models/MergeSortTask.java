@@ -11,9 +11,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public abstract class MergeSortTask extends Task{
 
-	static String FILES_DIR = "./";
+	static String FILES_DIR = "./static/";
 	static int MAX_NUM_EXPERIMS = 25;
 	protected boolean leftTask = true;
 
@@ -79,10 +81,10 @@ public abstract class MergeSortTask extends Task{
             String line = null;
             int lineNum = 1, i = 0;
 
-            String filename = String.format(FILES_DIR + "%d_%s", i, mergeFile.getFileName());
+            String filename = String.format(FILES_DIR + "unsorted/%d_%s", i, mergeFile.getFileName());
             Path splitFile = Paths.get(filename);
             Queue<String> filenames = new LinkedList<String>();
-            filenames.add(filename);
+            filenames.add(splitFile.getFileName().toString());
             BufferedWriter writer = Files.newBufferedWriter(splitFile, StandardOpenOption.CREATE);
 
             Long numLinesToread = splits.get(i);
@@ -92,9 +94,9 @@ public abstract class MergeSortTask extends Task{
                     writer.close();
                     lineNum = 1;
                     i++;
-                    filename = String.format(FILES_DIR + "%d_%s", i, mergeFile.getFileName());
+                    filename = String.format(FILES_DIR + "unsorted/%d_%s", i, mergeFile.getFileName());
                     splitFile = Paths.get(filename);
-                    filenames.add(filename);
+                    filenames.add(splitFile.getFileName().toString());
                     writer = Files.newBufferedWriter(splitFile, StandardOpenOption.CREATE);
                     numLinesToread = splits.get(i);
                 }
@@ -142,5 +144,6 @@ public abstract class MergeSortTask extends Task{
 		this.leftTask = isleftTask;
 	}
 
+	@JsonIgnore
 	public abstract String getResult();
 }

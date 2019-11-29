@@ -1,5 +1,8 @@
 package pcs;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.UUID;
 
 import io.javalin.Javalin;
 import io.javalin.core.util.FileUtil;
@@ -8,6 +11,7 @@ import io.javalin.http.staticfiles.Location;
 import payloads.TaskRequest;
 import payloads.WorkerNode;
 import pcs.models.NodeStatus;
+import pcs.models.Task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +58,7 @@ public class Server{
         	//TODO change file name to make it unique
         	if (file != null) {
         		//TODO change files dir location
-        		String filename = FILES_DIR + "unsorted/" + file.getFilename();
+        		String filename = FILES_DIR + "unsorted/" + UUID.randomUUID(); 
         		FileUtil.streamToFile(file.getContent(), filename);
         		String taskName = ctx.formParam("name");
         		System.out.println(file);
@@ -80,7 +84,15 @@ public class Server{
         });
 
         app.get("/api/tasks", ctx -> {
-        	ctx.json(taskController.getAllTasks());
+        	HashMap<String, Collection<Task>> tasks = taskController.getAllTasks();
+        	System.out.println(tasks);
+
+        	try {
+        		ctx.json(tasks);
+			} catch (Exception e) {
+				// TODO: handle exception
+				System.out.println(e);
+			}
         });
         
         app.get("/api/broadcast", ctx -> {
