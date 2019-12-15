@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public abstract class MergeSortTask extends Task{
 
-	static String FILES_DIR = "./static/";
+	static String FILES_DIR = "./static/mergesortfiles/";
 	static int MAX_NUM_EXPERIMS = 25;
 	protected boolean leftTask = true;
 
@@ -37,7 +37,7 @@ public abstract class MergeSortTask extends Task{
 		long len_file = Files.lines(unsortedFile).count();
 
 		if (len_file <= MAX_NUM_EXPERIMS) {
-			SortTask t = new SortTask(name, len_file, unsortedFilename,true);
+			SortTask t = new SortTask(name, len_file, unsortedFile.getFileName().toString(),true);
 			return t;
 		}else {
 			List<Long> splits= getSplits(len_file);
@@ -81,7 +81,7 @@ public abstract class MergeSortTask extends Task{
             String line = null;
             int lineNum = 1, i = 0;
 
-            String filename = String.format(FILES_DIR + "unsorted/%d_%s", i, mergeFile.getFileName());
+            String filename = String.format(FILES_DIR + "%d_%s", i, mergeFile.getFileName());
             Path splitFile = Paths.get(filename);
             Queue<String> filenames = new LinkedList<String>();
             filenames.add(splitFile.getFileName().toString());
@@ -94,7 +94,7 @@ public abstract class MergeSortTask extends Task{
                     writer.close();
                     lineNum = 1;
                     i++;
-                    filename = String.format(FILES_DIR + "unsorted/%d_%s", i, mergeFile.getFileName());
+                    filename = String.format(FILES_DIR + "%d_%s", i, mergeFile.getFileName());
                     splitFile = Paths.get(filename);
                     filenames.add(splitFile.getFileName().toString());
                     writer = Files.newBufferedWriter(splitFile, StandardOpenOption.CREATE);

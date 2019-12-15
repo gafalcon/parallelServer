@@ -54,6 +54,7 @@ public class TaskController {
 		System.out.println("Task started");
 		this.runningTasks.add(t);
 		this.wsController.broadcastMessage(this.getAllTasks());
+		this.wsController.broadcastMessage(this.socketServer.getAllNodes());
 	}
 	
 	public void taskCompleted(Task task) {
@@ -71,6 +72,7 @@ public class TaskController {
 		System.out.println("Task cancelled!!");
 		this.runningTasks.remove(task);
 		this.waitingTasks.add(task);
+		this.wsController.broadcastMessage(this.getAllTasks());
 	}
 
 	public List<Task> getRunningTasks() {

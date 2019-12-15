@@ -28,7 +28,7 @@ public class MergeTask extends MergeSortTask{
 	}
 	
 	public MergeTask(String name, long num_experims, Task left, Task right, TaskStatus status, boolean isLeftTask) {
-		super(name, TaskType.MERGE, status);
+		super(String.format("merge_%d_%s", num_experims, name), TaskType.MERGE, status);
 		this.name = name;
 		this.subtasks.add(left);
 		this.subtasks.add(right);
@@ -85,6 +85,12 @@ public class MergeTask extends MergeSortTask{
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public void completed(String results) {
+		this.mergedFile = results;
+		this.setStatus(TaskStatus.FINISHED);
 	}
 
 	@Override

@@ -13,7 +13,7 @@ public class SortTask extends MergeSortTask{
 	}
 
 	public SortTask(String name, long size, String unsortedFile, boolean isLeftTask) {
-		super(name, TaskType.SORT, TaskStatus.WAITING);
+		super(String.format("sort_%d_%s", size, name), TaskType.SORT, TaskStatus.WAITING);
 		this.setUnsortedFile(unsortedFile);
 		this.fileSize = size;
 		this.leftTask = isLeftTask;
@@ -56,11 +56,6 @@ public class SortTask extends MergeSortTask{
 		return false;
 	}
 
-	@Override
-	public boolean updateParent() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 	
 	@Override
 	public String toString() {

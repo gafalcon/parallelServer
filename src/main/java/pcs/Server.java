@@ -58,7 +58,7 @@ public class Server{
         	//TODO change file name to make it unique
         	if (file != null) {
         		//TODO change files dir location
-        		String filename = FILES_DIR + "unsorted/" + UUID.randomUUID(); 
+        		String filename = FILES_DIR + "mergesortfiles/" + UUID.randomUUID(); 
         		FileUtil.streamToFile(file.getContent(), filename);
         		String taskName = ctx.formParam("name");
         		System.out.println(file);
@@ -75,7 +75,7 @@ public class Server{
         	//TODO change file name to make it unique
         	if (file != null) {
         		//TODO change files dir location
-        		String filename = FILES_DIR + "sorted/" +file.getFilename();
+        		String filename = FILES_DIR  + "mergesortfiles/" + file.getFilename();
         		FileUtil.streamToFile(file.getContent(), filename);
         		System.out.println(file);
         		System.out.println(filename);

@@ -69,6 +69,9 @@ public class NodeConnection implements Runnable{
         } finally {
             try { socket.close(); } catch (IOException e) {}
             System.out.println("Closed: " + socket);
+            if (this.runningTask != null) {
+            	this.runningTask.cancelled();
+            }
             this.onDisconnect.accept(this.nodeId);
         }
 	}
