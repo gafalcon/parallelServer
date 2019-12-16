@@ -2,6 +2,8 @@ package pcs.models;
 
 import java.util.function.Consumer;
 
+import pcs.DB;
+
 public class PITask extends Task{
 
 	private long n_experims;
@@ -92,7 +94,11 @@ public class PITask extends Task{
 		if (this.parentTask != null) {
 			return this.parentTask.updateResult(this);
 		}
+		DB.updatePITask(this);
 		return false;
+	}
+
+	public synchronized void updateInDB() {
 	}
 
 	@Override
@@ -103,8 +109,11 @@ public class PITask extends Task{
 		this.n_experims_completed += t.n_experims_completed;
 		if (this.n_experims == this.n_experims_completed) {
 			this.status = TaskStatus.WAITING;
+			DB.updatePITask(this);
+			this.updateInDB();
 			return true;
 		}
+		DB.updatePITask(this);
 		return false;
 	}
 	

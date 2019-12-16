@@ -14,6 +14,7 @@ import payloads.WorkerNode;
 import pcs.models.MergeSortTask;
 import pcs.models.PITask;
 import pcs.models.Task;
+import pcs.models.TaskStatus;
 
 public class TaskController {
 	SocketServer socketServer;
@@ -26,14 +27,35 @@ public class TaskController {
 		this.runningTasks = new LinkedList<Task>();
 		this.completedTasks = new LinkedList<Task>();
 		this.waitingTasks = TaskQueue.getQueue();
+		DB.initDB();
+    	this.loadFromDB();
     	socketServer = new SocketServer(4000, this::taskStarted, this::taskCompleted, this::taskCancelled);
     	new Thread(socketServer).start();
+	}
+	
+	public void loadFromDB() {
+		List<Task> unfinished_pi_tasks = DB.getPITasks(false);
+		for(Task t: unfinished_pi_tasks) {
+			if (!t.getSubtasks().isEmpty()) {
+				for(Task st: t.getSubtasks()) {
+					if (st.getStatus() != TaskStatus.FINISHED)
+						this.waitingTasks.add(st);
+				}
+			} else {
+				this.waitingTasks.add(t);
+			}
+		}
+		List<Task> unfinished_ms_tasks = DB.getMergeSortTasks(false);
+		for(Task t: unfinished_ms_tasks) {
+			this.waitingTasks.addAll(t.getWaitingSubtasks());
+		}
 	}
 	
 	public Task newTask(TaskRequest taskRequest) throws IOException {
 		Task t;
 		if (taskRequest.getType().equals("pi")) {
 			t = PITask.createPITask(taskRequest.getName(), taskRequest.getNum_experiments());
+			DB.newPITask((PITask) t);
 			if (!t.getSubtasks().isEmpty()) {
 				this.waitingTasks.addAll(t.getSubtasks());
 			}else {
@@ -41,6 +63,7 @@ public class TaskController {
 			}
 		} else {//(taskRequest.getType().equals("sort")){
 			t = MergeSortTask.createSortTask(taskRequest.getName(), taskRequest.getSortfile());
+			DB.newMergeSortTask((MergeSortTask) t);
 			List<Task> leafTasks = t.getLeafTasks();
 			System.out.println(leafTasks);
 			this.waitingTasks.addAll(leafTasks);

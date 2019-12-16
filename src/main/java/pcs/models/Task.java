@@ -12,7 +12,7 @@ public abstract class Task {
 	protected String name;
 	protected TaskType task_type;
 	protected TaskStatus status;
-	
+	public String _id;
 	@JsonIgnore
 	protected Task parentTask;
 	
@@ -90,6 +90,20 @@ public abstract class Task {
 		return l;
 	}
 	
+	//Find all tasks that are ready to run in the moment, without any dependency
+	@JsonIgnore
+	public List<Task> getWaitingSubtasks() {
+		List<Task> l = new LinkedList<Task>();
+		if (this.getStatus() == TaskStatus.WAITING) {
+			l.add(this);
+		}else {
+			for (Task task: this.subtasks) {
+				l.addAll(task.getWaitingSubtasks());
+			}
+		}
+		return l;
+	}
+	
 	public abstract boolean start(Consumer<String> printFn);
 
 	public abstract boolean updateResult(Task subtask);
@@ -101,6 +115,12 @@ public abstract class Task {
 		return false;
 	}
 
+	public Task head() {
+		if (this.getParentTask() != null)
+			return this.getParentTask().head();
+		else
+			return this;
+	}
 
 	public void cancelled() {
 		// TODO Auto-generated method stub

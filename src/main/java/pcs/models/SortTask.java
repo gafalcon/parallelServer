@@ -6,7 +6,6 @@ public class SortTask extends MergeSortTask{
 	
 	private String unsortedFile;
 	private String sortedFile;
-	private long fileSize;
 
 	public SortTask(String name, TaskType task_type) {
 		super(name, task_type);

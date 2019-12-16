@@ -13,11 +13,14 @@ import java.util.Queue;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import pcs.DB;
+
 public abstract class MergeSortTask extends Task{
 
 	static String FILES_DIR = "./static/mergesortfiles/";
 	static int MAX_NUM_EXPERIMS = 25;
 	protected boolean leftTask = true;
+	protected long fileSize;
 
 	public MergeSortTask(String name, TaskType task_type) {
 		super(name, task_type);
@@ -135,6 +138,14 @@ public abstract class MergeSortTask extends Task{
 			return l;
 		}
 	}
+	@Override
+	public boolean updateParent() {
+		if (this.parentTask != null) {
+			return this.parentTask.updateResult(this);
+		}
+		DB.updateMergeSortTask(this);
+		return false;
+	}
 
 	public boolean isleftTask() {
 		return leftTask;
@@ -146,4 +157,12 @@ public abstract class MergeSortTask extends Task{
 
 	@JsonIgnore
 	public abstract String getResult();
+
+	public long getFileSize() {
+		return fileSize;
+	}
+
+	public void setFileSize(long fileSize) {
+		this.fileSize = fileSize;
+	}
 }

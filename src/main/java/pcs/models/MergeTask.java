@@ -2,12 +2,13 @@ package pcs.models;
 
 import java.util.function.Consumer;
 
+import pcs.DB;
+
 public class MergeTask extends MergeSortTask{
 
 	String leftFile;
 	String rightFile;
 	String mergedFile;
-	long filesize;
 
 	public MergeTask(String name, TaskType task_type) {
 		super(name, task_type);
@@ -24,7 +25,7 @@ public class MergeTask extends MergeSortTask{
 		this.name = name;
 		this.subtasks.add(left);
 		this.subtasks.add(right);
-		this.filesize = num_experims;
+		this.fileSize = num_experims;
 	}
 	
 	public MergeTask(String name, long num_experims, Task left, Task right, TaskStatus status, boolean isLeftTask) {
@@ -32,7 +33,7 @@ public class MergeTask extends MergeSortTask{
 		this.name = name;
 		this.subtasks.add(left);
 		this.subtasks.add(right);
-		this.filesize = num_experims;
+		this.fileSize = num_experims;
 		this.leftTask = isLeftTask;
 	}
 
@@ -82,8 +83,11 @@ public class MergeTask extends MergeSortTask{
 		
 		if (this.leftFile != null && this.rightFile != null) {
 			this.status = TaskStatus.WAITING;
+			DB.updateMergeSortTask(this);
 			return true;
 		}
+
+		DB.updateMergeSortTask(this);
 		return false;
 	}
 
@@ -99,7 +103,7 @@ public class MergeTask extends MergeSortTask{
 		for (Task task : subtasks) {
 			children_string += " " + task.toString();
 		}
-		return "MergeTask[ name="+this.name + " fileSize="+this.filesize + "subtasks=" + children_string;
+		return "MergeTask[ name="+this.name + " fileSize="+this.fileSize + "subtasks=" + children_string;
 	}
 
 	@Override

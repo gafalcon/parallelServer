@@ -8,7 +8,7 @@ public class TaskQueue extends ArrayBlockingQueue<Task>{
 
 	private static final long serialVersionUID = 1L;
 
-	static int MAX_CAPACITY = 100;
+	static int MAX_CAPACITY = 1000;
 
 	private TaskQueue(int capacity) {
 		super(capacity);
