@@ -184,7 +184,7 @@ public class DB {
 
 	public static void updateMergeSortTask(MergeSortTask t) {
 		MergeSortTask toUpdate = (MergeSortTask) t.head();
-		mergeSortTasks.replaceOne(eq("_id", new ObjectId(t._id)), 
+		mergeSortTasks.replaceOne(eq("_id", new ObjectId(toUpdate._id)), 
 				mergeSortTaskToDoc(toUpdate));
 	}
 	

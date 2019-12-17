@@ -3,11 +3,15 @@ package pcs;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import payloads.TaskRequest;
 import payloads.WorkerNode;
@@ -22,13 +26,14 @@ public class TaskController {
 	List<Task> completedTasks;
 	BlockingQueue<Task> waitingTasks;
 	WebSocketController wsController = WebSocketController.getWSController();
-
+    ObjectMapper mapper;
 	public TaskController() {
-		this.runningTasks = new LinkedList<Task>();
-		this.completedTasks = new LinkedList<Task>();
+		this.runningTasks = Collections.synchronizedList(new LinkedList<Task>());
+		this.completedTasks = Collections.synchronizedList(new LinkedList<Task>());
 		this.waitingTasks = TaskQueue.getQueue();
 		DB.initDB();
     	this.loadFromDB();
+		this.mapper = new ObjectMapper();
     	socketServer = new SocketServer(4000, this::taskStarted, this::taskCompleted, this::taskCancelled);
     	new Thread(socketServer).start();
 	}
@@ -69,14 +74,18 @@ public class TaskController {
 			this.waitingTasks.addAll(leafTasks);
 			//this.waitingTasks.add(t);
 		}
-		this.wsController.broadcastMessage(this.getAllTasks());
+		//this.wsController.broadcastMessage(this.getAllTasks());
+		this.broadcastTasks(this.waitingTasks, "waiting");
 		return t;
 	}
 	
 	public void taskStarted(Task t) {
 		System.out.println("Task started");
 		this.runningTasks.add(t);
-		this.wsController.broadcastMessage(this.getAllTasks());
+		//this.wsController.broadcastMessage(this.getAllTasks());
+
+		this.broadcastTasks(this.waitingTasks, "waiting");
+		this.broadcastTasks(this.runningTasks, "running");
 		this.wsController.broadcastMessage(this.socketServer.getAllNodes());
 	}
 	
@@ -86,16 +95,21 @@ public class TaskController {
 		//If has parent tasks and its ready to run
 		if (task.updateParent()) {
 			this.waitingTasks.add(task.getParentTask());
+			this.broadcastTasks(this.waitingTasks, "waiting");
 		}
 		this.completedTasks.add(task);
-		this.wsController.broadcastMessage(this.getAllTasks());
+		this.broadcastTasks(this.runningTasks, "running");
+		this.broadcastTasks(this.completedTasks, "completed");
+		//this.wsController.broadcastMessage(this.getAllTasks());
 	}
 
 	public void taskCancelled(Task task) {
 		System.out.println("Task cancelled!!");
 		this.runningTasks.remove(task);
 		this.waitingTasks.add(task);
-		this.wsController.broadcastMessage(this.getAllTasks());
+		this.broadcastTasks(this.runningTasks, "running");
+		this.waitingTasks.add(task.getParentTask());
+		//this.wsController.broadcastMessage(this.getAllTasks());
 	}
 
 	public List<Task> getRunningTasks() {
@@ -110,6 +124,20 @@ public class TaskController {
 		return waitingTasks;
 	}
 	
+	public void broadcastTasks(Collection<Task> tasks, String taskname) {
+		HashMap<String, Collection<Task>> map = new HashMap<>();
+		String jsonInString = null;
+		synchronized (tasks) {
+			map.put(taskname, tasks);
+			try {
+				jsonInString =  mapper.writeValueAsString(map);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		}
+		this.wsController.broadcastString(jsonInString);
+	}
+
 	public HashMap<String, Collection<Task>> getAllTasks(){
 		HashMap<String, Collection<Task>> map = new HashMap<>();
 		map.put("waiting", this.waitingTasks);

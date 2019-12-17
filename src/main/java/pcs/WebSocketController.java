@@ -40,4 +40,10 @@ public class WebSocketController {
     		ctx.send(message);
     	});
     }
+    
+    public void broadcastString(String message) {
+    	this.wsConnections.forEach(ctx -> {
+    		ctx.send(message);
+    	});
+    }
 }
