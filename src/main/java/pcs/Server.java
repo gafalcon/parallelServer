@@ -2,6 +2,7 @@ package pcs;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import io.javalin.Javalin;
@@ -95,6 +96,27 @@ public class Server{
 			}
         });
         
+        app.get("/api/tasks/pi/completed", ctx -> {
+        	List<Task> pitasks = DB.getPITasks(true);
+
+        	try {
+        		ctx.json(pitasks);
+			} catch (Exception e) {
+				// TODO: handle exception
+				System.out.println(e);
+			}
+        });
+        
+        app.get("/api/tasks/mergesort/completed", ctx -> {
+        	List<Task> mstasks = DB.getMergeSortTasks(true);
+        	try {
+        		ctx.json(mstasks);
+			} catch (Exception e) {
+				// TODO: handle exception
+				System.out.println(e);
+			}
+        });
+
         app.get("/api/broadcast", ctx -> {
         	String msg = ctx.queryParam("msg");
         	taskController.broadCastMsg(msg);
