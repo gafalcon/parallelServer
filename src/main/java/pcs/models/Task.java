@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public abstract class Task {
-	static int MAX_NUM_EXPERIMS = 100000;
+	static int MAX_NUM_EXPERIMS = 1000000;
 	protected String name;
 	protected TaskType task_type;
 	protected TaskStatus status;

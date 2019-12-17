@@ -33,7 +33,7 @@ public class NodeConnection implements Runnable{
 		// TODO Auto-generated constructor stub
 		this.nodeId = node_id;
          this.socket = socket;
-         this.status = NodeStatus.WAITING;
+         this.status = NodeStatus.STARTED;
          this.onDisconnect = onDisconnect;
          this.onReady = onReady;
          this.onTaskCompleted = onTaskCompleted;
@@ -59,6 +59,8 @@ public class NodeConnection implements Runnable{
             	System.out.println("RECEIVED FROM NODE: "+line);
             	if (line.startsWith("END")){
             		this.taskEnded(line);
+            	} else if (line.startsWith("CPU")) {
+            		this.cpuMeasure(line);
             	}
             }
             System.out.println("Socket has no more lines");
@@ -76,8 +78,19 @@ public class NodeConnection implements Runnable{
         }
 	}
 	
+	public synchronized void cpuMeasure(String line) {
+		if (this.getStatus() == NodeStatus.STARTED) {
+			double cpu = Double.parseDouble(line.split(" ")[1]);
+			if (cpu < 20) {
+				this.status = NodeStatus.WAITING;
+				this.onReady.accept(this.nodeId);
+				notify();
+			}
+		}
+	}
 	public void consumeTasks() {
 		while(true) {
+			this.waitAvailability();
 			try {
 				System.out.println(String.format("Node %s: waiting for new task", this.nodeId));
 				Task t = this.taskQueue.take();
@@ -109,16 +122,18 @@ public class NodeConnection implements Runnable{
 			this.onTaskCompleted.accept(this.nodeId, task);
 		}
 		
-		while (this.status == NodeStatus.BUSY) {
+	}
+	public synchronized void waitAvailability() {
+		while (this.status != NodeStatus.WAITING) {
             try { 
                 wait();
+                System.out.println("end wait");
             } catch (InterruptedException e)  {
                 Thread.currentThread().interrupt(); 
                 System.out.println("Error: Thread Interrupted");
                 //Log.error("Thread interrupted", e); 
             }
         }
-		
 	}
 	
 	public synchronized void taskEnded(String msg) {

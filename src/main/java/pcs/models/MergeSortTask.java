@@ -18,7 +18,7 @@ import pcs.DB;
 public abstract class MergeSortTask extends Task{
 
 	static String FILES_DIR = "./static/mergesortfiles/";
-	static int MAX_NUM_EXPERIMS = 25;
+	static int MAX_NUM_EXPERIMS = 500;
 	protected boolean leftTask = true;
 	protected long fileSize;
 
